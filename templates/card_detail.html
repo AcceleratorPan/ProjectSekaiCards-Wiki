@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>卡牌详情 - {{ card.description }} - {{card.characterName}}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="detail-container">
+        <a href="{{ back_url }}">&laquo; 返回卡牌列表</a>
+        <h1>{{ card.description }} - {{card.characterName}}</h1>
+        
+        <div class="detail-images">
+            <figure>
+                <img src="{{ url_for('static', filename='webp/' + card.id|string + '_normal.webp') }}" alt="训练前" onerror="this.style.display='none'">
+                <figcaption>训练前</figcaption>
+            </figure>
+            {% if card.cardRarityType in ['rarity_3', 'rarity_4'] %}
+            <figure>
+                <img src="{{ url_for('static', filename='webp/' + card.id|string + '_trained.webp') }}" alt="训练后" onerror="this.style.display='none'">
+                <figcaption>训练后</figcaption>
+            </figure>
+            {% endif %}
+        </div>
+
+        <div class="detail-info">
+            <h2>详细信息</h2>
+            <ul>
+                <li>
+                    <strong>收藏</strong>
+                    <img id="subscription-star"
+                         class="subscription-star"
+                         src="{{ url_for('static', filename='png/rarity_star_trained.png') if card.subscribed else url_for('static', filename='png/rarity_star_normal.png') }}"
+                         alt="{{ '已收藏' if card.subscribed else '未收藏' }}"
+                         title="点击切换收藏状态"
+                         data-card-id="{{ card.id }}">
+                </li>
+                <li>
+                    <strong>ID</strong>
+                    <span>{{ card.id }}</span>
+                </li>
+                <li>
+                    <strong>标题</strong>
+                    <span>{{ card.description }}</span>
+                </li>
+                {% if card.gachaPhrase and card.gachaPhrase != '-' %}
+                <li>
+                    <strong>扭蛋短语</strong>
+                    <div class="gacha-phrase-container">
+                        <span class="gacha-phrase">{{ card.gachaPhrase }}</span>
+                        <img id="play-stop-icon" 
+                             src="{{ url_for('static', filename='png/icon_play.png') }}" 
+                             alt="play" 
+                             class="play-stop-icon" 
+                             title="play_audio"
+                             tabindex="0"> {# 使图片可聚焦，方便键盘操作 #}
+                    </div>
+                </li>
+                {% endif %}
+                <li>
+                    <strong>角色</strong>
+                    <div class="character-value">
+                        <span>{{ card.characterName }}</span>
+                        <img src="{{ url_for('static', filename='png/' + card.characterName.replace(' ', '_').replace('(', '').replace(')', '').replace('None_', '') + '.png') }}" 
+                             alt="{{ card.characterName }} icon" 
+                             class="character-icon"
+                             onerror="this.style.display='none'">
+                    </div>
+                </li>
+                <li>
+                    <strong>组合</strong>
+                    <span>{{ card.characterUnit }}</span>
+                </li>
+                <li>
+                    <strong>属性</strong>
+                    <div class="attribute-value">
+                        <span>{{ card.attribute }}</span>
+                        <img src="{{ url_for('static', filename='png/icon_attribute_' + card.attribute + '.png') }}" 
+                             alt="{{ card.attribute }} icon" 
+                             class="attribute-icon"
+                             onerror="this.style.display='none'">
+                    </div>
+                </li>
+                <li>
+                    <strong>开放时间</strong>
+                    <span>{{ card.releaseTime }}</span>
+                </li>
+                <li>
+                    <strong>稀有度</strong>
+                    {% set rarity_type = card.cardRarityType %}
+                    {% set count = 0 %}
+                    {% set image_path = '' %}
+                    {% set alt_text = '' %}
+                    {% if rarity_type == 'rarity_birthday' %}
+                        {% set count = 1 %}
+                        {% set image_path = 'png/rarity_birthday.png' %}
+                        {% set alt_text = 'Birthday Star' %}
+                    {% elif rarity_type in ['rarity_1', 'rarity_2'] %}
+                        {% set image_path = 'png/rarity_star_normal.png' %}
+                        {% set alt_text = 'Normal Star' %}
+                        {% set count = 1 if rarity_type == 'rarity_1' else 2 %}
+                    {% elif rarity_type in ['rarity_3', 'rarity_4'] %}
+                        {% set image_path = 'png/rarity_star_trained.png' %}
+                        {% set alt_text = 'Trained Star' %}
+                        {% set count = 3 if rarity_type == 'rarity_3' else 4 %}
+                    {% endif %}
+
+                    <div class="rarity-stars-container">
+                        {% for i in range(count) %}
+                            <img src="{{ url_for('static', filename=image_path) }}" alt="{{ alt_text }}" class="rarity-star">
+                        {% endfor %}
+                    </div>
+                </li>
+                <li>
+                    <strong>技能名称</strong>
+                    <span>{{ card.cardSkillName }}</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- 动态设置返回按钮的链接 ---
+            const backLink = document.getElementById('back-link');
+            if (backLink && document.referrer) {
+                try {
+                    const referrerUrl = new URL(document.referrer);
+                    // 确保来源页是本站的 /cards 或 /compare_results
+                    if (referrerUrl.origin === window.location.origin && (referrerUrl.pathname === '/cards' || referrerUrl.pathname === '/compare_results')) {
+                        backLink.href = document.referrer;
+                    }
+                } catch (e) {
+                    // 如果 document.referrer 格式不正确，则忽略
+                    console.error("无法解析 referrer URL:", e);
+                }
+            }
+
+            // 音频播放逻辑
+            const playStopIcon = document.getElementById('play-stop-icon');
+            let audio = null;
+            let isPlaying = false;
+
+            if (playStopIcon) {
+                const assetName = "{{ card.assetbundleName }}";
+                const audioUrl = `https://storage.sekai.best/sekai-jp-assets/sound/gacha/get_voice/${assetName}/${assetName}.mp3`;
+                
+                audio = new Audio(audioUrl);
+                audio.preload = 'auto';
+
+                const togglePlayStop = () => {
+                    if (isPlaying) {
+                        audio.pause();
+                        audio.currentTime = 0;
+                    } else {
+                        audio.play().catch(e => {
+                            console.error("音频播放失败:", e);
+                            alert("音频加载或播放失败，请检查网络或资源是否存在。");
+                            playStopIcon.src = "{{ url_for('static', filename='png/icon_play.png') }}";
+                            playStopIcon.alt = "play";
+                            isPlaying = false;
+                        });
+                    }
+                };
+
+                // 添加点击和键盘事件
+                playStopIcon.addEventListener('click', togglePlayStop);
+                playStopIcon.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter' || event.keyCode === 13) {
+                        event.preventDefault();
+                        togglePlayStop();
+                    }
+                });
+
+                // 监听音频状态变化以更新图标
+                audio.addEventListener('play', () => {
+                    playStopIcon.src = "{{ url_for('static', filename='png/icon_stop.png') }}"; // 改为停止图标
+                    playStopIcon.alt = "stop";
+                    isPlaying = true;
+                });
+
+                // pause事件现在也代表停止，所以切换回播放图标
+                audio.addEventListener('pause', () => {
+                    playStopIcon.src = "{{ url_for('static', filename='png/icon_play.png') }}";
+                    playStopIcon.alt = "play";
+                    isPlaying = false;
+                });
+
+                // 播放结束后也切换回播放图标
+                audio.addEventListener('ended', () => {
+                    playStopIcon.src = "{{ url_for('static', filename='png/icon_play.png') }}";
+                    playStopIcon.alt = "play";
+                    isPlaying = false;
+                });
+
+                audio.addEventListener('error', (e) => {
+                    console.error("音频加载错误:", e);
+                    playStopIcon.alt = "play(failed)";
+                    playStopIcon.title = "play_audio(failed)";
+                    playStopIcon.style.opacity = '0.5';
+                    playStopIcon.style.pointerEvents = 'none';
+                });
+            }
+
+            const subStar = document.getElementById('subscription-star');
+            if (subStar) {
+                subStar.addEventListener('click', function() {
+                    const cardId = this.dataset.cardId;
+                    fetch("{{ url_for('toggle_subscription') }}", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ card_id: cardId }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (data.new_status === 1) {
+                                this.src = "{{ url_for('static', filename='png/rarity_star_trained.png') }}";
+                                this.alt = "已收藏";
+                            } else {
+                                this.src = "{{ url_for('static', filename='png/rarity_star_normal.png') }}";
+                                this.alt = "未收藏";
+                            }
+                        } else {
+                            alert('更新失败: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('请求失败，请检查网络。');
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

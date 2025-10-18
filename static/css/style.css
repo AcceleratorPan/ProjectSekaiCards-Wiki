@@ -1,0 +1,513 @@
+body {
+    font-family: sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    font-size: 18px;
+}
+
+h1, h2 {
+    color: #1c1e21;
+}
+h1 {
+    font-size: 2.2em;
+}
+h2 {
+    font-size: 1.8em;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+    margin-bottom: 10px;
+}
+
+/* --- 头部操作按钮组 --- */
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* --- 筛选/比对功能通用样式 --- */
+.filter-wrapper, .compare-wrapper {
+    position: relative;
+}
+.filter-btn, .compare-btn {
+    padding: 8px 16px;
+    font-size: 1em;
+    font-weight: bold;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.filter-btn {
+    background-color: #007bff;
+}
+.filter-btn:hover {
+    background-color: #0056b3;
+}
+.compare-btn {
+    background-color: #17a2b8;
+}
+.compare-btn:hover {
+    background-color: #138496;
+}
+
+.filter-menu, .compare-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    max-height: 70vh;
+    overflow-y: auto;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    padding: 20px;
+    z-index: 1000;
+}
+.filter-menu { width: 650px; }
+.compare-menu { width: 400px; }
+
+.filter-menu.hidden, .compare-menu.hidden {
+    display: none;
+}
+.filter-section {
+    margin-bottom: 20px;
+}
+.filter-label {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    display: block;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+#desc-search {
+    width: 100%;
+    padding: 8px;
+    font-size: 1em;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+.checkbox-group {
+    display: flex; /* 改为flex布局以更好地控制对齐 */
+    flex-wrap: wrap; /* 允许换行 */
+    gap: 15px;
+}
+.checkbox-item, .checkbox-item-icon {
+    display: flex;
+    align-items: center;
+}
+.checkbox-item-icon label {
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+/* 隐藏原始的checkbox */
+.checkbox-item-icon input[type="checkbox"] {
+    display: none;
+}
+/* 当checkbox被选中时，为其label添加边框和背景 */
+.checkbox-item-icon input[type="checkbox"]:checked + label {
+    border-color: #007bff;
+    background-color: #e7f1ff;
+}
+.filter-char-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+.filter-attr-icon {
+    width: 40px;
+    height: 40px;
+}
+.filter-rarity-stars {
+    display: flex;
+    align-items: center;
+    height: 40px; /* 与其他图标高度对齐 */
+}
+.filter-rarity-star {
+    height: 20px;
+    width: auto;
+    margin: 0 1px;
+}
+.filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+.filter-apply-btn, .filter-reset-btn {
+    padding: 8px 16px;
+    font-size: 1em;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+}
+.filter-apply-btn {
+    color: #fff;
+    background-color: #28a745;
+    border: none;
+}
+.filter-apply-btn:hover {
+    background-color: #218838;
+}
+.filter-reset-btn {
+    color: #333;
+    background-color: #e9ecef;
+    border: 1px solid #ddd;
+}
+.filter-reset-btn:hover {
+    background-color: #d8dde2;
+}
+.no-results {
+    font-size: 1.2em;
+    color: #666;
+    text-align: center;
+    grid-column: 1 / -1;
+}
+
+/* --- 拖拽上传区域样式 --- */
+.drop-zone {
+    border: 2px dashed #ccc;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    transition: border-color 0.3s, background-color 0.3s;
+}
+.drop-zone.drag-over {
+    border-color: #007bff;
+    background-color: #f0f8ff;
+}
+.drop-zone p {
+    margin: 5px 0;
+}
+#file-input {
+    display: none; /* 隐藏原始的文件输入框 */
+}
+.file-input-label {
+    display: inline-block;
+    padding: 6px 12px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+.file-input-label:hover {
+    background-color: #0056b3;
+}
+.preview-container {
+    text-align: center;
+}
+.preview-container.hidden {
+    display: none;
+}
+#image-preview {
+    max-width: 100%;
+    max-height: 200px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+}
+#filename-display {
+    font-style: italic;
+    color: #555;
+}
+
+/* --- 比对结果页面样式 --- */
+.results-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.results-summary {
+    font-size: 1.3em;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.results-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    max-width: 1000px;
+    margin: 0 auto;
+}
+.card-score {
+    font-weight: bold;
+    color: #28a745;
+}
+.back-link {
+    font-size: 1em;
+    font-weight: bold;
+    color: #007bff;
+    text-decoration: none;
+}
+
+/* 卡牌网格布局 */
+.card-grid {
+    display: grid;
+    /* 创建5列，每列等宽 */
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    /* 定义行和列之间的间隙 */
+    gap: 20px;
+    padding: 10px;
+}
+
+.card-container {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+a.card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.card-image-wrapper {
+    background-color: #e9ecef; /* 默认浅灰色背景 */
+    width: 100%;
+    /* 保持16:9的宽高比，可根据卡牌实际比例调整 */
+    aspect-ratio: 16 / 9;
+    position: relative; /* 关键：为内部绝对定位的元素提供容器 */
+    overflow: hidden; /* 隐藏可能溢出的角标 \*/
+}
+
+.card-image-wrapper.image-error {
+    /* 在加载失败时显示一个内置的SVG图标作为提示 */
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="%23ced4da" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 12H16.5L14 16.5L10 7.5L7.5 12H2.5"/><path d="M21 4H3a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"/></svg>');
+    background-size: 48px 48px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 确保图片填满容器而不变形 */
+    display: block;
+}
+
+.card-attribute-icon-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 16%; /* 相对于父容器的宽度，实现自适应 */
+    max-width: 32px; /* 限制最大尺寸 */
+}
+.card-attribute-icon {
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.5)); /* 给图标加一点阴影以突出 */
+}
+
+.card-rarity-stars-container {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    display: flex;
+    width: 16%;
+    flex-direction: column; /* 垂直排列 */
+    gap: 1px;
+}
+.card-rarity-star {
+    width: 100%;
+    max-width: 32px; /* 限制最大尺寸 */
+    height: auto;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.5)); /* 给图标加一点阴影以突出 */
+}
+
+.card-info {
+    padding: 12px;
+    text-align: center;
+    border-top: 1px solid #eee;
+    min-height: 50px; /* 确保即使文字少也有一定高度 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.card-info p {
+    margin: 3px 0;
+    font-size: 1em;
+    padding: 0 5px;
+}
+
+.card-description {
+    font-weight: bold;
+    color: #333;
+}
+.card-character {
+    color: #666;
+}
+
+.image-preloader {
+    display: none;
+}
+
+/* 详情页布局 */
+.detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.detail-container a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.detail-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    justify-content: center;
+    margin-bottom: 25px;
+}
+
+.detail-images figure {
+    margin: 0;
+    text-align: center;
+}
+
+.detail-images figcaption {
+    font-size: 1.1em;
+    margin-top: 8px;
+    color: #555;
+}
+
+.detail-images img {
+    max-width: 1000px;
+    height: auto;
+    border-radius: 16px;
+    border: 1px solid #ddd;
+}
+
+.detail-info ul {
+    list-style-type: none;
+    padding: 0;
+    font-size: 1.2em;
+}
+
+.detail-info li {
+    padding: 14px 0;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-info li:last-child {
+    border-bottom: none;
+}
+
+.detail-info li strong {
+    min-width: 150px;
+    display: inline-block;
+    color: #555;
+}
+
+.attribute-value, .character-value, .gacha-phrase-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.attribute-icon, .character-icon {
+    height: 44px;
+    width: 44px;
+    margin-left: 12px; /* 图标与文字的间距 */
+}
+
+.rarity-stars-container {
+    display: flex;
+    align-items: center;
+    gap: 3px; /* 星星之间的间距 */
+}
+
+.rarity-star {
+    height: 32px; /* 控制星星的大小 */
+    width: auto;
+}
+
+.subscription-star {
+    height: 32px;
+    width: auto;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.subscription-star:hover {
+    transform: scale(1.15);
+}
+
+.gacha-phrase {
+    text-align: right;
+}
+
+.play-stop-icon {
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    margin-left: 15px;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    padding: 4px;
+    box-sizing: border-box;
+    transition: background-color 0.2s, opacity 0.2s;
+    flex-shrink: 0;
+    outline: none;
+}
+.play-stop-icon:hover {
+    background-color: #f0f0f0;
+}
+.play-stop-icon:focus-visible {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* 响应式设计：在小屏幕上调整为2列 */
+@media (max-width: 768px) {
+    .card-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    .detail-images img {
+        max-width: 100%;
+    }
+}

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>卡牌列表</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="header-container">
+        <h1>所有卡牌</h1>
+
+        <div class="header-actions">
+            <div class="compare-wrapper">
+                <button id="compare-btn" class="compare-btn">比对</button>
+                <div id="compare-menu" class="compare-menu hidden menu-container">
+                    <form id="compare-form" method="post" action="{{ url_for('compare') }}" enctype="multipart/form-data">
+                        <label class="filter-label">上传图片进行比对</label>
+                        <div id="drop-zone" class="drop-zone">
+                            <p>将图片拖拽到此处</p>
+                            <p>或</p>
+                            <input type="file" name="image" id="file-input" accept="image/png, image/jpeg, image/svg+xml, image/webp">
+                            <label for="file-input" class="file-input-label">选择文件</label>
+                        </div>
+                        <div id="preview-container" class="preview-container hidden">
+                            <img id="image-preview" src="#" alt="图片预览">
+                            <span id="filename-display"></span>
+                        </div>
+                        <div class="filter-actions">
+                            <button type="submit" id="start-compare-btn" class="filter-apply-btn" disabled>开始比对</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="filter-wrapper">
+                <button id="filter-btn" class="filter-btn">筛选</button>
+                <div id="filter-menu" class="filter-menu hidden menu-container">
+                    <form method="get" action="{{ url_for('show_cards') }}">
+                        <div class="filter-section">
+                            <label for="desc-search" class="filter-label">卡牌标题</label>
+                            <input type="text" id="desc-search" name="desc" value="{{ selected_filters.desc }}" placeholder="输入标题关键词...">
+                        </div>
+
+                        <div class="filter-section">
+                            <label class="filter-label">角色</label>
+                            <div class="checkbox-group">
+                                {% for char_name in filter_options.characters %}
+                                <div class="checkbox-item-icon">
+                                    <input type="checkbox" id="char-{{ char_name }}" name="character" value="{{ char_name }}" {% if char_name in selected_filters.characters %}checked{% endif %}>
+                                    <label for="char-{{ char_name }}" title="{{ char_name }}">
+                                        <img src="{{ url_for('static', filename='png/' + char_name.replace(' ', '_').replace('(', '').replace(')', '').replace('None_', '') + '.png') }}" class="filter-char-icon" onerror="this.style.display='none'">
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="filter-section">
+                            <label class="filter-label">属性</label>
+                            <div class="checkbox-group">
+                                {% for attr in filter_options.attributes %}
+                                <div class="checkbox-item-icon">
+                                    <input type="checkbox" id="attr-{{ attr }}" name="attr" value="{{ attr }}" {% if attr in selected_filters.attributes %}checked{% endif %}>
+                                    <label for="attr-{{ attr }}" title="{{ attr|capitalize }}">
+                                        <img src="{{ url_for('static', filename='png/icon_attribute_' + attr + '.png') }}" class="filter-attr-icon" onerror="this.style.display='none'">
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="filter-section">
+                            <label class="filter-label">稀有度</label>
+                            <div class="checkbox-group">
+                                {% for rarity_type, count in filter_options.rarities.items() %}
+                                <div class="checkbox-item-icon">
+                                    <input type="checkbox" id="rarity-{{ rarity_type }}" name="rarity" value="{{ rarity_type }}" {% if rarity_type in selected_filters.rarities %}checked{% endif %}>
+                                    <label for="rarity-{{ rarity_type }}">
+                                        <div class="filter-rarity-stars">
+                                            {% if rarity_type == 'rarity_birthday' %}
+                                                <img src="{{ url_for('static', filename='png/rarity_birthday.png') }}" class="filter-rarity-star">
+                                            {% elif rarity_type in ['rarity_1', 'rarity_2'] %}
+                                                {% for i in range(count) %}<img src="{{ url_for('static', filename='png/rarity_star_normal.png') }}" class="filter-rarity-star">{% endfor %}
+                                            {% elif rarity_type in ['rarity_3', 'rarity_4'] %}
+                                                {% for i in range(count) %}<img src="{{ url_for('static', filename='png/rarity_star_trained.png') }}" class="filter-rarity-star">{% endfor %}
+                                            {% endif %}
+                                        </div>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="filter-section">
+                            <label class="filter-label">其它</label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="subscribed" name="subscribed" value="1" {% if selected_filters.subscribed == '1' %}checked{% endif %}>
+                                    <label for="subscribed">只显示已收藏</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="filter-actions">
+                            <button type="submit" class="filter-apply-btn">应用筛选</button>
+                            <a href="{{ url_for('show_cards') }}" class="filter-reset-btn">重置</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-grid">
+        {% for card in cards %}
+        <div class="card-container">
+            <a href="{{ url_for('card_detail', card_id=card.id) }}" class="card-link">
+                <div class="card-image-wrapper">
+                    <img src="{{ url_for('static', filename='webp/' + card.id|string + '_normal.webp') }}"
+                         alt="Card {{ card.id }}"
+                         class="card-image"
+                         data-card-id="{{ card.id }}"
+                         data-rarity="{{ card.cardRarityType }}"
+                         data-trained-src="{{ url_for('static', filename='webp/' + card.id|string + '_trained.webp') }}"
+                         onerror="this.style.display='none'; this.parentElement.classList.add('image-error');">
+                    
+                    <div class="card-attribute-icon-container">
+                        <img src="{{ url_for('static', filename='png/icon_attribute_' + card.attribute + '.png') }}" 
+                            alt="{{ card.attribute }}" 
+                            class="card-attribute-icon"
+                            onerror="this.style.display='none'">
+                    </div>
+
+                    <div class="card-rarity-stars-container">
+                        {% set rarity_type = card.cardRarityType %}
+                        {% if rarity_type == 'rarity_birthday' %}
+                            <img src="{{ url_for('static', filename='png/rarity_birthday.png') }}" class="card-rarity-star">
+                        {% elif rarity_type == 'rarity_1' %}
+                            <img src="{{ url_for('static', filename='png/rarity_star_normal.png') }}" class="card-rarity-star">
+                        {% elif rarity_type == 'rarity_2' %}
+                            {% for i in range(2) %}
+                                <img src="{{ url_for('static', filename='png/rarity_star_normal.png') }}" class="card-rarity-star">
+                            {% endfor %}
+                        {# 对于3星和4星卡，初始显示normal星，并用data-*属性存储两种星的路径 #}
+                        {% elif rarity_type in ['rarity_3', 'rarity_4'] %}
+                            {% set count = 3 if rarity_type == 'rarity_3' else 4 %}
+                            {% for i in range(count) %}
+                                <img src="{{ url_for('static', filename='png/rarity_star_normal.png') }}"
+                                    class="card-rarity-star rarity-hover-toggle"
+                                    data-normal-star="{{ url_for('static', filename='png/rarity_star_normal.png') }}"
+                                    data-trained-star="{{ url_for('static', filename='png/rarity_star_trained.png') }}">
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            <div class="card-info">
+                <p class="card-description">{{ card.description }}</p>
+                <p class="card-character">{{ card.characterName }}</p>
+            </div>
+        </div>
+        {% endfor %}
+        {% if not cards %}
+            <p class="no-results">没有找到符合条件的卡牌。</p>
+        {% endif %}
+    </div>
+
+    <div class="image-preloader">
+        {% for image_url in preload_images %}
+            <img src="{{ image_url }}">
+        {% endfor %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- 菜单通用关闭逻辑 ---
+            function setupMenuToggle(btnId, menuId) {
+                const btn = document.getElementById(btnId);
+                const menu = document.getElementById(menuId);
+                if (!btn || !menu) return;
+
+                btn.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    // 在切换当前菜单前，先关闭所有其他菜单
+                    document.querySelectorAll('.menu-container').forEach(m => {
+                        if (m.id !== menuId) {
+                            m.classList.add('hidden');
+                        }
+                    });
+                    // 切换当前菜单的显示状态
+                    menu.classList.toggle('hidden');
+                });
+            }
+
+            setupMenuToggle('filter-btn', 'filter-menu');
+            setupMenuToggle('compare-btn', 'compare-menu');
+
+            // 点击页面任何其他地方，关闭所有菜单
+            window.addEventListener('click', function(event) {
+                document.querySelectorAll('.menu-container').forEach(menu => {
+                     const btn = document.getElementById(menu.id.replace('-menu', '-btn'));
+                     // 确保点击的不是按钮本身
+                     if (btn && !menu.contains(event.target) && !btn.contains(event.target)) {
+                        menu.classList.add('hidden');
+                    }
+                });
+            });
+
+            // --- 比对菜单拖拽逻辑 ---
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('file-input');
+            const previewContainer = document.getElementById('preview-container');
+            const imagePreview = document.getElementById('image-preview');
+            const filenameDisplay = document.getElementById('filename-display');
+            const compareBtn = document.getElementById('start-compare-btn');
+
+            if (dropZone) {
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('drag-over');
+                });
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.classList.remove('drag-over');
+                });
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('drag-over');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        fileInput.files = files;
+                        handleFile(files[0]);
+                    }
+                });
+                fileInput.addEventListener('change', () => {
+                    if (fileInput.files.length > 0) {
+                        handleFile(fileInput.files[0]);
+                    }
+                });
+            }
+            
+            function handleFile(file) {
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        previewContainer.classList.remove('hidden');
+                        filenameDisplay.textContent = file.name;
+                        dropZone.classList.add('hidden');
+                        compareBtn.disabled = false;
+                        compareBtn.textContent = "开始比对";
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('请上传图片文件!');
+                }
+            }
+            
+            // 点击比对按钮时显示加载状态
+            const compareForm = document.getElementById('compare-form');
+            if (compareForm) {
+                compareForm.addEventListener('submit', () => {
+                    compareBtn.disabled = true;
+                    compareBtn.textContent = '正在比对中...';
+                });
+            }
+            
+            // --- 悬停逻辑 ---
+            const cardContainers = document.querySelectorAll('.card-container');
+            cardContainers.forEach(container => {
+                const image = container.querySelector('.card-image');
+                const starsToToggle = container.querySelectorAll('.rarity-hover-toggle');
+                const rarity = image.dataset.rarity;
+
+                // 仅为3星和4星卡牌添加统一的悬停事件
+                if (rarity === 'rarity_3' || rarity === 'rarity_4') {
+                    const originalImageSrc = image.src;
+                    const trainedImageSrc = image.dataset.trainedSrc;
+
+                    container.addEventListener('mouseover', () => {
+                        image.src = trainedImageSrc;
+                        starsToToggle.forEach(star => {
+                            star.src = star.dataset.trainedStar;
+                        });
+                    });
+
+                    container.addEventListener('mouseout', () => {
+                        image.src = originalImageSrc;
+                        starsToToggle.forEach(star => {
+                            star.src = star.dataset.normalStar;
+                        });
+                    });
+                }
+            });
+
+            // --- 保持滚动位置逻辑 ---
+            const scrollPosition = sessionStorage.getItem('scrollPosition');
+            if (scrollPosition) {
+                setTimeout(() => {
+                    window.scrollTo(0, parseInt(scrollPosition, 10));
+                    sessionStorage.removeItem('scrollPosition');
+                }, 100); 
+            }
+
+            const cardLinks = document.querySelectorAll('.card-link');
+            cardLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    sessionStorage.setItem('scrollPosition', window.scrollY);
+                });
+            });
+        });
+
+        // bfcache 修复逻辑
+        window.addEventListener('pageshow', function(event) {
+            // event.persisted为true表示页面是从bfcache中加载的
+            if (event.persisted) {
+                // 找到所有需要重置状态的卡片图片和星星
+                const imagesToReset = document.querySelectorAll('.card-image[data-rarity="rarity_3"], .card-image[data-rarity="rarity_4"]');
+                const starsToReset = document.querySelectorAll('.rarity-hover-toggle');
+
+                // 将卡面图片重置为 normal 状态
+                imagesToReset.forEach(img => {
+                    const cardId = img.dataset.cardId;
+                    img.src = `{{ url_for('static', filename='webp/') }}${cardId}_normal.webp`;
+                });
+
+                // 将星星重置为 normal 状态
+                starsToReset.forEach(star => {
+                    star.src = star.dataset.normalStar;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
